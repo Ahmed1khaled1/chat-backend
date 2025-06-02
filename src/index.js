@@ -39,16 +39,21 @@ app.use(
   cors({
     origin: "https://chat-client-theta-inky.vercel.app",
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
   })
 );
+
+// Health check endpoint
 app.get("/", (req, res) => {
   res.send("Api is working!");
 });
 
-
+// API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
+// Production static file serving
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
