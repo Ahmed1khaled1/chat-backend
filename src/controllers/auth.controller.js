@@ -42,8 +42,11 @@ export const signup = async (req, res) => {
       res.status(400).json({ message: "Invalid user data" });
     }
   } catch (error) {
-    console.log("Error in signup controller", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("Error in signup controller:", error);
+    res.status(500).json({ 
+      message: "Internal Server Error",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
@@ -74,7 +77,7 @@ export const login = async (req, res) => {
       profilePic: user.profilePic,
     });
   } catch (error) {
-    console.error("Error in login controller:", error.message);
+    console.error("Error in login controller:", error);
     res.status(500).json({ 
       message: "Internal Server Error",
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
