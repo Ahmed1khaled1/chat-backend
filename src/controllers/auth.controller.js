@@ -6,6 +6,8 @@ import cloudinary from "../lib/cloudinary.js";
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
   try {
+    console.log('Signup attempt for email:', email);
+    
     if (!fullName || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
@@ -28,21 +30,32 @@ export const signup = async (req, res) => {
     });
 
     if (newUser) {
-      // generate jwt token here
-      generateToken(newUser._id, res);
-      await newUser.save();
+      try {
+        // generate jwt token here
+        generateToken(newUser._id, res);
+        await newUser.save();
+        console.log('User created successfully:', newUser._id);
 
-      res.status(201).json({
-        _id: newUser._id,
-        fullName: newUser.fullName,
-        email: newUser.email,
-        profilePic: newUser.profilePic,
-      });
+        res.status(201).json({
+          _id: newUser._id,
+          fullName: newUser.fullName,
+          email: newUser.email,
+          profilePic: newUser.profilePic,
+        });
+      } catch (saveError) {
+        console.error('Error saving user:', saveError);
+        throw saveError;
+      }
     } else {
       res.status(400).json({ message: "Invalid user data" });
     }
   } catch (error) {
-    console.error("Error in signup controller:", error);
+    console.error("Error in signup controller:", {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
     res.status(500).json({ 
       message: "Internal Server Error",
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -53,6 +66,8 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
+    console.log('Login attempt for email:', email);
+    
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
     }
@@ -68,16 +83,27 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    generateToken(user._id, res);
+    try {
+      generateToken(user._id, res);
+      console.log('User logged in successfully:', user._id);
 
-    res.status(200).json({
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      profilePic: user.profilePic,
-    });
+      res.status(200).json({
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        profilePic: user.profilePic,
+      });
+    } catch (tokenError) {
+      console.error('Error generating token:', tokenError);
+      throw tokenError;
+    }
   } catch (error) {
-    console.error("Error in login controller:", error);
+    console.error("Error in login controller:", {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
     res.status(500).json({ 
       message: "Internal Server Error",
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -128,39 +154,6 @@ export const updateProfile = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
-// export const updateUserInfo = async (req, res) => {
-//   try {
-//     const userId = req.user._id;
-//     const { fullName, email } = req.body;
-
-//     if (!fullName && !email) {
-//       return res.status(400).json({ message: "All fields are empty" });
-//     }
-
-//     const updatedUser = await User.findById(userId);
-//     if (!updatedUser) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     if(fullName) updatedUser.fullName = fullName || updatedUser.fullName;
-//     if (email) updatedUser.email = email || updatedUser.email;
-
-//     await updatedUser.save();
-//     res.status(200).json({
-//       success: true,
-//       data: {
-//         fullName: updatedUser.fullName,
-//         email: updatedUser.email,
-//         profilePic: updatedUser.profilePic,
-//       },
-//     });
-//   } catch (error) {
-//     console.log("Error in updateUserInfo controller", error.message);
-//     res.status(500).json({ message: "Internal Server Error" });
-//   }
-// };
-
 
 export const checkAuth = (req, res) => {
   try {
